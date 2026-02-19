@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Shop Ngân An</title>
+
+<style>
+body{font-family:Arial;margin:10px}
+.kệ{border:1px solid #ddd;padding:10px;margin-bottom:10px}
+.admin-only{display:none}
+.admin .admin-only{display:block}
+button{padding:6px 12px}
+@media(max-width:600px){
+  .kệ{font-size:16px}
+  button{width:100%}
+}
+</style>
+</head>
+
+<body>
+
+<div style="text-align:center;margin-bottom:10px">
+  <button onclick="unlock()">🔒 MỞ QUẢN LÝ</button>
+</div>
+
+<h2>🛍 Shop Ngân An</h2>
+<div id="shelves"></div>
+
+<script>
+/* ===== CẤU HÌNH ===== */
+const ADMIN_PASSWORD = "1234";
+const TOTAL_SHELVES = 32;
+
+/* ===== MỞ QUẢN LÝ ===== */
+function unlock(){
+  const p = prompt("Mật khẩu quản lý:");
+  if(p === ADMIN_PASSWORD){
+    document.body.classList.add("admin");
+    alert("✅ Đã mở quản lý");
+  } else {
+    alert("❌ Sai mật khẩu");
+  }
+}
+
+/* ===== DỮ LIỆU DEMO (SAU NÀY GẮN SHOPEE) ===== */
+const PRODUCTS = [
+  {name:"Áo thun bé gái", price:"99.000đ", link:"#"},
+  {name:"Váy công chúa", price:"149.000đ", link:"#"},
+  {name:"Giày búp bê", price:"129.000đ", link:"#"}
+];
+
+/* ===== RENDER 32 KỆ ===== */
+const box = document.getElementById("shelves");
+for(let i=1;i<=TOTAL_SHELVES;i++){
+  const p = PRODUCTS[(i-1) % PRODUCTS.length];
+  box.innerHTML += `
+    <div class="kệ">
+      <b>Kệ ${i}</b><br>
+      ${p.name} – ${p.price}<br>
+      <a href="${p.link}" target="_blank">👉 Mua</a><br>
+      <input class="admin-only" placeholder="Dán link Shopee cho kệ ${i}">
+    </div>
+  `;
+}
+</script>
+
+</body>
+</html>
