@@ -67,3 +67,33 @@ function render(products){
 
 </body>
 </html>
+
+<script>
+/* ===== FIX DATA KỆ ===== */
+const KE_DATA = [
+  { ten: "Kệ 1", link: "#" },
+  { ten: "Kệ 2", link: "#" },
+  { ten: "Kệ 3", link: "#" },
+  { ten: "Kệ 4", link: "#" },
+  { ten: "Kệ 5", link: "#" },
+  { ten: "Kệ 6", link: "#" },
+  { ten: "Kệ 7", link: "#" }
+];
+
+/* ===== ADMIN MODE ===== */
+function openAdmin() {
+  const pass = prompt("Nhập mật khẩu quản lý:");
+  if (pass === "nganan123") {
+    alert("✅ ĐÃ VÀO CHẾ ĐỘ QUẢN LÝ");
+    document.body.style.border = "5px solid red";
+  } else {
+    alert("❌ Sai mật khẩu");
+  }
+}
+
+/* ===== GẮN LẠI NÚT ADMIN ===== */
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.querySelector("button");
+  if (btn) btn.onclick = openAdmin;
+});
+</script>
