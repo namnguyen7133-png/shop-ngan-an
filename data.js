@@ -1,8 +1,14 @@
 const PRODUCTS = [
   {
-    name: "Tên sản phẩm 1",
-    price: "Giá sản phẩm",
-    img: "LINK ẢNH",
-    link: "LINK SHOPEE AFF"
+    name: "Sản phẩm test 1",
+    price: "123.000đ",
+    img: "https://via.placeholder.com/400x400?text=TEST+1",
+    link: "#"
+  },
+  {
+    name: "Sản phẩm test 2",
+    price: "456.000đ",
+    img: "https://via.placeholder.com/400x400?text=TEST+2",
+    link: "#"
   }
 ];
