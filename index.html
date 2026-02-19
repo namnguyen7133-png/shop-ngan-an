@@ -7,13 +7,10 @@
 <style>
 body{font-family:Arial;margin:10px}
 .kệ{border:1px solid #ddd;padding:10px;margin-bottom:10px}
-.admin-only{display:none}
+.admin-only{display:none;margin-top:5px}
 .admin .admin-only{display:block}
-button{padding:6px 12px}
-@media(max-width:600px){
-  .kệ{font-size:16px}
-  button{width:100%}
-}
+button{padding:6px 10px;margin:2px}
+.mode{font-size:12px;color:#666}
 </style>
 </head>
 
@@ -27,76 +24,76 @@ button{padding:6px 12px}
 <div id="shelves"></div>
 
 <script>
-/* ================== CẤU HÌNH GỐC ================== */
+/* ===== CẤU HÌNH CHUNG ===== */
 const ADMIN_PASSWORD = "1234";
 const TOTAL_SHELVES = 32;
 
-/* ===== KHAI BÁO 3 SHOP (THÊM SHOP = THÊM 1 DÒNG) ===== */
+/* ===== XÁC ĐỊNH SHOP THEO LINK ===== */
+const params = new URLSearchParams(location.search);
+const child = params.get("child") || "ngan-an";
+
 const SHOPS = {
-  "ngan-an":  { name: "Ngân An" },
-  "minh-chau":{ name: "Minh Châu" },
-  "bich-ngoc":{ name: "Bích Ngọc" }
+  "ngan-an": "Shop Ngân An",
+  "minh-chau": "Shop Minh Châu",
+  "bich-ngoc": "Shop Bích Ngọc"
 };
 
-/* ================== XÁC ĐỊNH SHOP ================== */
-const params = new URLSearchParams(window.location.search);
-const childKey = params.get("child") || "ngan-an";
-const shop = SHOPS[childKey] || SHOPS["ngan-an"];
+document.getElementById("shopTitle").innerText = "🛍 " + (SHOPS[child] || "Shop");
 
-document.getElementById("shopTitle").innerText = "🛍 Shop " + shop.name;
+/* ===== DỮ LIỆU TỰ ĐỘNG (BOT GỢI Ý) ===== */
+const AUTO_PRODUCTS = [
+  {name:"Áo bé gái", price:"99.000đ", link:"#"},
+  {name:"Váy bé gái", price:"149.000đ", link:"#"},
+  {name:"Giày bé gái", price:"129.000đ", link:"#"}
+];
 
-/* ================== ADMIN ================== */
+/* ===== MỞ QUẢN LÝ ===== */
 function unlock(){
   const p = prompt("Mật khẩu quản lý:");
   if(p === ADMIN_PASSWORD){
     document.body.classList.add("admin");
-    alert("✅ Đã mở quản lý cho shop " + shop.name);
+    alert("✅ Đã mở quản lý");
   } else {
     alert("❌ Sai mật khẩu");
   }
 }
 
-/* ================== SẢN PHẨM MẪU ================== */
-const PRODUCTS = [
-  {name:"Áo bé gái", price:"99.000đ"},
-  {name:"Váy bé gái", price:"149.000đ"},
-  {name:"Giày bé gái", price:"129.000đ"}
-];
-
-/* ================== LƯU / ĐỌC LINK ================== */
-function keyName(i){
-  return "shop_"+childKey+"_ke_"+i;
-}
-
-function saveLink(i, link){
-  if(link && link.startsWith("http")){
-    localStorage.setItem(keyName(i), link);
-    alert("✅ Đã lưu link kệ " + i + " cho " + shop.name);
-  }
-}
-
-function getLink(i){
-  return localStorage.getItem(keyName(i)) || "#";
-}
-
-/* ================== RENDER KỆ ================== */
+/* ===== RENDER KỆ ===== */
 const box = document.getElementById("shelves");
 
 for(let i=1;i<=TOTAL_SHELVES;i++){
-  const p = PRODUCTS[(i-1)%PRODUCTS.length];
-  const link = getLink(i);
+  const auto = AUTO_PRODUCTS[(i-1)%AUTO_PRODUCTS.length];
 
   box.innerHTML += `
-    <div class="kệ">
-      <b>Kệ ${i}</b><br>
-      ${p.name} – ${p.price}<br>
-      <a href="${link}" target="_blank">👉 Mua</a><br>
-      <input class="admin-only"
-        placeholder="Dán link Shopee cho kệ ${i}"
-        value="${link === "#" ? "" : link}"
-        onblur="saveLink(${i}, this.value)">
+  <div class="kệ" data-mode="auto">
+    <b>Kệ ${i}</b><br>
+
+    <div class="view">
+      <span class="name">${auto.name}</span> – 
+      <span class="price">${auto.price}</span><br>
+      <a class="buy" href="${auto.link}" target="_blank">👉 Mua</a>
+      <div class="mode">(Tự động)</div>
     </div>
-  `;
+
+    <div class="admin-only">
+      <button onclick="setAuto(this)">🔁 Tự động</button>
+      <button onclick="setManual(this)">✍️ Dán tay</button><br>
+      <input placeholder="Dán link Shopee">
+    </div>
+  </div>`;
+}
+
+/* ===== CHẾ ĐỘ ===== */
+function setAuto(btn){
+  const k = btn.closest(".kệ");
+  k.dataset.mode="auto";
+  k.querySelector(".mode").innerText="(Tự động)";
+}
+
+function setManual(btn){
+  const k = btn.closest(".kệ");
+  k.dataset.mode="manual";
+  k.querySelector(".mode").innerText="(Dán tay)";
 }
 </script>
 
