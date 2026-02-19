@@ -3,71 +3,100 @@
 <head>
 <meta charset="utf-8">
 <title>Shop Gia Đình</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-body{font-family:Arial;margin:10px;background:#fafafa}
-h2{text-align:center}
-.kệ{border:1px solid #ccc;padding:10px;margin-bottom:10px;background:#fff}
-.admin-only{display:none;margin-top:5px;width:100%}
+body{font-family:Arial;margin:10px}
+.kệ{border:1px solid #ddd;padding:10px;margin-bottom:10px}
+.admin-only{display:none}
 .admin .admin-only{display:block}
-button{padding:8px;width:100%}
-a{display:inline-block;margin-top:5px}
+button{padding:6px 12px}
+@media(max-width:600px){
+  .kệ{font-size:16px}
+  button{width:100%}
+}
 </style>
 </head>
 
 <body>
 
-<button onclick="unlock()">🔒 MỞ QUẢN LÝ</button>
-<h2>🛍 Shop Gia Đình</h2>
+<div style="text-align:center;margin-bottom:10px">
+  <button onclick="unlock()">🔒 MỞ QUẢN LÝ</button>
+</div>
+
+<h2 id="shopTitle">🛍 Shop</h2>
 <div id="shelves"></div>
 
 <script>
-/* ===== CẤU HÌNH TRỌN ĐỜI ===== */
+/* ================== CẤU HÌNH GỐC ================== */
 const ADMIN_PASSWORD = "1234";
 const TOTAL_SHELVES = 32;
 
-/* ===== SẢN PHẨM GỢI Ý ===== */
-const AUTO_PRODUCTS = [
-  {name:"Áo bé gái", price:"99.000đ", link:"#"},
-  {name:"Váy bé gái", price:"149.000đ", link:"#"},
-  {name:"Giày bé gái", price:"129.000đ", link:"#"}
-];
+/* ===== KHAI BÁO 3 SHOP (THÊM SHOP = THÊM 1 DÒNG) ===== */
+const SHOPS = {
+  "ngan-an":  { name: "Ngân An" },
+  "minh-chau":{ name: "Minh Châu" },
+  "bich-ngoc":{ name: "Bích Ngọc" }
+};
 
-/* ===== MỞ QUẢN LÝ ===== */
+/* ================== XÁC ĐỊNH SHOP ================== */
+const params = new URLSearchParams(window.location.search);
+const childKey = params.get("child") || "ngan-an";
+const shop = SHOPS[childKey] || SHOPS["ngan-an"];
+
+document.getElementById("shopTitle").innerText = "🛍 Shop " + shop.name;
+
+/* ================== ADMIN ================== */
 function unlock(){
   const p = prompt("Mật khẩu quản lý:");
-  if(p===ADMIN_PASSWORD){
+  if(p === ADMIN_PASSWORD){
     document.body.classList.add("admin");
-    alert("Đã mở quản lý");
+    alert("✅ Đã mở quản lý cho shop " + shop.name);
+  } else {
+    alert("❌ Sai mật khẩu");
   }
 }
 
-/* ===== RENDER ===== */
+/* ================== SẢN PHẨM MẪU ================== */
+const PRODUCTS = [
+  {name:"Áo bé gái", price:"99.000đ"},
+  {name:"Váy bé gái", price:"149.000đ"},
+  {name:"Giày bé gái", price:"129.000đ"}
+];
+
+/* ================== LƯU / ĐỌC LINK ================== */
+function keyName(i){
+  return "shop_"+childKey+"_ke_"+i;
+}
+
+function saveLink(i, link){
+  if(link && link.startsWith("http")){
+    localStorage.setItem(keyName(i), link);
+    alert("✅ Đã lưu link kệ " + i + " cho " + shop.name);
+  }
+}
+
+function getLink(i){
+  return localStorage.getItem(keyName(i)) || "#";
+}
+
+/* ================== RENDER KỆ ================== */
 const box = document.getElementById("shelves");
+
 for(let i=1;i<=TOTAL_SHELVES;i++){
-  const auto = AUTO_PRODUCTS[(i-1)%AUTO_PRODUCTS.length];
-  const saved = localStorage.getItem("ke_"+i);
-  const link = saved || auto.link;
+  const p = PRODUCTS[(i-1)%PRODUCTS.length];
+  const link = getLink(i);
 
   box.innerHTML += `
-  <div class="kệ">
-    <b>Kệ ${i}</b><br>
-    ${auto.name} – ${auto.price}<br>
-    <a href="${link}" target="_blank">👉 Mua</a>
-    <input class="admin-only"
-      placeholder="Dán link Shopee kệ ${i}"
-      value="${saved||""}"
-      onblur="save(${i},this.value)">
-  </div>`;
-}
-
-/* ===== LƯU ===== */
-function save(i,val){
-  if(val.startsWith("http")){
-    localStorage.setItem("ke_"+i,val);
-    alert("Đã lưu kệ "+i);
-    location.reload();
-  }
+    <div class="kệ">
+      <b>Kệ ${i}</b><br>
+      ${p.name} – ${p.price}<br>
+      <a href="${link}" target="_blank">👉 Mua</a><br>
+      <input class="admin-only"
+        placeholder="Dán link Shopee cho kệ ${i}"
+        value="${link === "#" ? "" : link}"
+        onblur="saveLink(${i}, this.value)">
+    </div>
+  `;
 }
 </script>
 
