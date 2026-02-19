@@ -2,83 +2,70 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<title>Shop Ngân An</title>
+<title>Shop Gia Đình</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body{font-family:Arial;margin:10px;background:#fafafa}
-.kệ{border:1px solid #ddd;padding:10px;margin-bottom:10px;background:#fff}
+h2{text-align:center}
+.kệ{border:1px solid #ccc;padding:10px;margin-bottom:10px;background:#fff}
 .admin-only{display:none;margin-top:5px;width:100%}
 .admin .admin-only{display:block}
-button{padding:8px;margin:5px 0}
+button{padding:8px;width:100%}
+a{display:inline-block;margin-top:5px}
 </style>
 </head>
 
 <body>
 
-<div style="text-align:center">
-  <button onclick="unlock()">🔒 MỞ QUẢN LÝ</button>
-</div>
-
-<h2>🛍 Shop Ngân An</h2>
+<button onclick="unlock()">🔒 MỞ QUẢN LÝ</button>
+<h2>🛍 Shop Gia Đình</h2>
 <div id="shelves"></div>
 
 <script>
-/* ===== CẤU HÌNH ===== */
-const SHOP_NAME = "Ngân An";
+/* ===== CẤU HÌNH TRỌN ĐỜI ===== */
 const ADMIN_PASSWORD = "1234";
-const CSV_FILE = "database.csv";
 const TOTAL_SHELVES = 32;
 
-/* ===== ADMIN ===== */
+/* ===== SẢN PHẨM GỢI Ý ===== */
+const AUTO_PRODUCTS = [
+  {name:"Áo bé gái", price:"99.000đ", link:"#"},
+  {name:"Váy bé gái", price:"149.000đ", link:"#"},
+  {name:"Giày bé gái", price:"129.000đ", link:"#"}
+];
+
+/* ===== MỞ QUẢN LÝ ===== */
 function unlock(){
-  const p = prompt("Nhập mật khẩu quản lý:");
-  if(p === ADMIN_PASSWORD){
+  const p = prompt("Mật khẩu quản lý:");
+  if(p===ADMIN_PASSWORD){
     document.body.classList.add("admin");
-    alert("✅ Đã mở quản lý");
+    alert("Đã mở quản lý");
   }
 }
 
-/* ===== LOAD CSV ===== */
-fetch(CSV_FILE)
-.then(r=>r.text())
-.then(text=>{
-  const rows = text.trim().split("\n").slice(1);
-  const products = rows.map(r=>{
-    const [name,price,link] = r.split(",");
-    return {name,price,link};
-  });
-  render(products);
-});
+/* ===== RENDER ===== */
+const box = document.getElementById("shelves");
+for(let i=1;i<=TOTAL_SHELVES;i++){
+  const auto = AUTO_PRODUCTS[(i-1)%AUTO_PRODUCTS.length];
+  const saved = localStorage.getItem("ke_"+i);
+  const link = saved || auto.link;
 
-/* ===== RENDER KỆ ===== */
-function render(products){
-  const box = document.getElementById("shelves");
-  box.innerHTML = "";
-
-  for(let i=1;i<=TOTAL_SHELVES;i++){
-    const auto = products[(i-1)%products.length];
-    const savedLink = localStorage.getItem("ke_"+i);
-    const finalLink = savedLink || auto.link;
-
-    box.innerHTML += `
-    <div class="kệ">
-      <b>Kệ ${i}</b><br>
-      ${auto.name} – ${auto.price}<br>
-      <a href="${finalLink}" target="_blank">👉 Mua</a>
-
-      <input class="admin-only"
-        placeholder="Dán link Shopee cho kệ ${i}"
-        value="${savedLink || ""}"
-        onblur="saveLink(${i}, this.value)">
-    </div>`;
-  }
+  box.innerHTML += `
+  <div class="kệ">
+    <b>Kệ ${i}</b><br>
+    ${auto.name} – ${auto.price}<br>
+    <a href="${link}" target="_blank">👉 Mua</a>
+    <input class="admin-only"
+      placeholder="Dán link Shopee kệ ${i}"
+      value="${saved||""}"
+      onblur="save(${i},this.value)">
+  </div>`;
 }
 
-/* ===== LƯU LINK TAY ===== */
-function saveLink(i, link){
-  if(link && link.startsWith("http")){
-    localStorage.setItem("ke_"+i, link);
-    alert("✅ Đã lưu link cho kệ " + i + " (F5 không mất)");
+/* ===== LƯU ===== */
+function save(i,val){
+  if(val.startsWith("http")){
+    localStorage.setItem("ke_"+i,val);
+    alert("Đã lưu kệ "+i);
     location.reload();
   }
 }
