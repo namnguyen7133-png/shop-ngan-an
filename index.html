@@ -1,100 +1,116 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="utf-8">
-<title>Shop Gia Đình</title>
+<meta charset="UTF-8">
+<title>Tiệm Lì Xì – Shop Gia Đình</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{font-family:Arial;margin:10px}
-.kệ{border:1px solid #ddd;padding:10px;margin-bottom:10px}
-.admin-only{display:none;margin-top:5px}
+body{margin:0;font-family:Arial;background:#fff7e6}
+header{background:#c62828;color:#fff;padding:14px;text-align:center}
+header h2{margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:10px}
+.card{background:#fff;border-radius:8px;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.card img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:6px}
+.card h3{font-size:14px;margin:6px 0}
+.price{color:#c62828;font-weight:bold;font-size:14px}
+.card a{display:block;margin-top:6px;text-align:center;background:#ffcc80;padding:8px;border-radius:6px;text-decoration:none;color:#000;font-weight:bold}
+.admin{border:3px solid #c62828}
+.admin-only{display:none;margin-top:6px}
 .admin .admin-only{display:block}
-button{padding:6px 10px;margin:2px}
-.mode{font-size:12px;color:#666}
+button{padding:6px 8px;margin:2px;font-size:12px}
+footer{text-align:center;font-size:12px;color:#555;padding:10px}
 </style>
 </head>
 
 <body>
 
-<div style="text-align:center;margin-bottom:10px">
+<header>
+  <h2 id="shopTitle">Shop</h2>
+  <p>Đúng • Đủ • Đẹp • Kiếm tiền • Sống lâu</p>
   <button onclick="unlock()">🔒 MỞ QUẢN LÝ</button>
-</div>
+</header>
 
-<h2 id="shopTitle">🛍 Shop</h2>
-<div id="shelves"></div>
+<div id="grid" class="grid"></div>
+
+<footer>© Tiệm Lì Xì – Hệ thống bền vững</footer>
 
 <script>
-/* ===== CẤU HÌNH CHUNG ===== */
+/* ================= CẤU HÌNH GỐC ================= */
 const ADMIN_PASSWORD = "1234";
 const TOTAL_SHELVES = 32;
 
-/* ===== XÁC ĐỊNH SHOP THEO LINK ===== */
-const params = new URLSearchParams(location.search);
-const child = params.get("child") || "ngan-an";
-
+/* ================= SHOP ================= */
 const SHOPS = {
-  "ngan-an": "Shop Ngân An",
-  "minh-chau": "Shop Minh Châu",
-  "bich-ngoc": "Shop Bích Ngọc"
+  ngan_an:{ title:"👧 Shop Ngân An" },
+  minh_chau:{ title:"👧 Shop Minh Châu" },
+  bich_ngoc:{ title:"👧 Shop Bích Ngọc" }
 };
 
-document.getElementById("shopTitle").innerText = "🛍 " + (SHOPS[child] || "Shop");
-
-/* ===== DỮ LIỆU TỰ ĐỘNG (BOT GỢI Ý) ===== */
+/* ================= TỰ ĐỘNG ================= */
 const AUTO_PRODUCTS = [
-  {name:"Áo bé gái", price:"99.000đ", link:"#"},
-  {name:"Váy bé gái", price:"149.000đ", link:"#"},
-  {name:"Giày bé gái", price:"129.000đ", link:"#"}
+  {name:"Váy bé gái",price:"149.000đ",img:"https://via.placeholder.com/300?text=Vay+be+gai",link:"https://shopee.vn"},
+  {name:"Áo bé gái",price:"99.000đ",img:"https://via.placeholder.com/300?text=Ao+be+gai",link:"https://shopee.vn"},
+  {name:"Giày bé gái",price:"129.000đ",img:"https://via.placeholder.com/300?text=Giay+be+gai",link:"https://shopee.vn"}
 ];
 
-/* ===== MỞ QUẢN LÝ ===== */
+/* ================= XÁC ĐỊNH SHOP ================= */
+const params = new URLSearchParams(location.search);
+const shopKey = params.get("shop") || "ngan_an";
+const shop = SHOPS[shopKey] || SHOPS.ngan_an;
+document.getElementById("shopTitle").innerText = shop.title;
+
+/* ================= ADMIN ================= */
 function unlock(){
   const p = prompt("Mật khẩu quản lý:");
   if(p === ADMIN_PASSWORD){
     document.body.classList.add("admin");
-    alert("✅ Đã mở quản lý");
-  } else {
-    alert("❌ Sai mật khẩu");
+    alert("Đã mở quản lý");
   }
 }
 
-/* ===== RENDER KỆ ===== */
-const box = document.getElementById("shelves");
+/* ================= LƯU / LẤY ================= */
+function storageKey(i){ return shopKey+"_ke_"+i; }
+function saveLink(i,val){
+  if(val.startsWith("http")){
+    localStorage.setItem(storageKey(i),val);
+    alert("Đã lưu kệ "+i);
+    render();
+  }
+}
+function getLink(i){ return localStorage.getItem(storageKey(i)); }
 
-for(let i=1;i<=TOTAL_SHELVES;i++){
-  const auto = AUTO_PRODUCTS[(i-1)%AUTO_PRODUCTS.length];
+/* ================= RENDER ================= */
+const grid = document.getElementById("grid");
 
-  box.innerHTML += `
-  <div class="kệ" data-mode="auto">
-    <b>Kệ ${i}</b><br>
+function render(){
+  grid.innerHTML="";
+  for(let i=1;i<=TOTAL_SHELVES;i++){
+    const auto = AUTO_PRODUCTS[(i-1)%AUTO_PRODUCTS.length];
+    const manual = getLink(i);
+    const link = manual || auto.link;
+    const name = auto.name;
+    const price = auto.price;
+    const img = auto.img;
+    const mode = manual ? "✍️ Dán tay" : "🤖 Tự động";
 
-    <div class="view">
-      <span class="name">${auto.name}</span> – 
-      <span class="price">${auto.price}</span><br>
-      <a class="buy" href="${auto.link}" target="_blank">👉 Mua</a>
-      <div class="mode">(Tự động)</div>
-    </div>
-
-    <div class="admin-only">
-      <button onclick="setAuto(this)">🔁 Tự động</button>
-      <button onclick="setManual(this)">✍️ Dán tay</button><br>
-      <input placeholder="Dán link Shopee">
-    </div>
-  </div>`;
+    grid.innerHTML += `
+      <div class="card">
+        <img src="${img}">
+        <h3>Kệ ${i}: ${name}</h3>
+        <div class="price">${price}</div>
+        <a href="${link}" target="_blank">MUA</a>
+        <div class="admin-only">
+          <div>Chế độ: ${mode}</div>
+          <input placeholder="Dán link Shopee kệ ${i}" value="${manual||""}"
+                 onblur="saveLink(${i},this.value)">
+        </div>
+      </div>
+    `;
+  }
 }
 
-/* ===== CHẾ ĐỘ ===== */
-function setAuto(btn){
-  const k = btn.closest(".kệ");
-  k.dataset.mode="auto";
-  k.querySelector(".mode").innerText="(Tự động)";
-}
-
-function setManual(btn){
-  const k = btn.closest(".kệ");
-  k.dataset.mode="manual";
-  k.querySelector(".mode").innerText="(Dán tay)";
-}
+render();
 </script>
 
 </body>
