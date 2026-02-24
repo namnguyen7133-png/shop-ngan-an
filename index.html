@@ -4,43 +4,46 @@
 <meta charset="utf-8">
 <title>Shop Ngân An</title>
 <style>
-body{font-family:Arial;margin:10px;background:#fafafa}
+body{font-family:Arial;margin:10px;background:#fafafa; line-height: 1.6;}
 h1{text-align:center}
-.kệ{border:1px solid #ddd;padding:10px;margin-bottom:10px;background:#fff}
+.kệ{border:1px solid #ddd;padding:10px;margin-bottom:10px;background:#fff; border-radius: 8px; box-shadow: 2px 2px 5px #eee;}
 .admin-only{display:none}
 .admin .admin-only{display:block}
-button{padding:8px 12px;margin:4px}
-input{width:100%;padding:6px;margin-top:6px}
+button{padding:8px 12px;margin:4px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc;}
+input{width:95%;padding:6px;margin-top:6px; border: 1px solid #ddd;}
+.grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+.img-sp { width: 100%; border-radius: 5px; margin-bottom: 5px; }
+.btn-mua { background: #fb5531; color: white; text-decoration: none; padding: 5px 10px; border-radius: 5px; display: inline-block; margin-top: 5px; font-size: 14px; }
 </style>
 </head>
 <body>
 
 <h1>🛍 Shop Ngân An</h1>
 
-<div style="text-align:center">
+<div style="text-align:center; margin-bottom: 20px;">
   <button onclick="unlock()">🔒 MỞ QUẢN LÝ</button>
 </div>
 
-<div class="admin-only" style="text-align:center">
-  <button onclick="mode='auto';render()">⚙️ TỰ ĐỘNG</button>
-  <button onclick="mode='manual';render()">✍️ DÁN TAY</button>
+<div class="admin-only" style="text-align:center; background: #eee; padding: 10px; margin-bottom: 20px;">
+  <p><b>CHẾ ĐỘ XEM:</b></p>
+  <button onclick="changeMode('auto')" style="background: #4CAF50; color:white;">⚙️ TỪ GOOGLE SHEET (TỰ ĐỘNG)</button>
+  <button onclick="changeMode('manual')" style="background: #2196F3; color:white;">✍️ TỰ GÕ TAY (THỦ CÔNG)</button>
 </div>
 
-<div id="shelves"></div>
+<div id="shelves" class="grid-container">
+    <p style="text-align:center; width: 100%;">Đang kết nối tủ đồ...</p>
+</div>
 
 <script>
 const SHOP_KEY="ngan-an";
 const ADMIN_PASSWORD="1234";
 const TOTAL=32;
+const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQFCL1NiCeMNUGWbtkzgUgsQIdhjbASXoard37mTu0QQQFxUr1YjI7PSsMNdjDu2hRydSWbx-Ezaypa/pub?gid=0&single=true&output=csv";
 
-const AUTO=[
- {name:"Áo bé gái",price:"99.000đ",link:"#"},
- {name:"Váy công chúa",price:"149.000đ",link:"#"},
- {name:"Giày búp bê",price:"129.000đ",link:"#"}
-];
+let mode="auto"; 
+let sheetData = [];
 
-let mode="auto";
-
+// 1. Hàm mở khóa Admin
 function unlock(){
  if(prompt("Mật khẩu quản lý:")===ADMIN_PASSWORD){
   document.body.classList.add("admin");
@@ -48,31 +51,78 @@ function unlock(){
  }
 }
 
-function save(i,d){localStorage.setItem(SHOP_KEY+i,JSON.stringify(d))}
+// 2. Hàm lưu và tải dữ liệu DÁN TAY (LocalStorage)
+function save(i,d){localStorage.setItem(SHOP_KEY+i,JSON.stringify(d)); render();}
 function load(i){return JSON.parse(localStorage.getItem(SHOP_KEY+i)||"null")}
 
+// 3. Hàm lấy dữ liệu từ Google Sheet
+async function fetchSheet() {
+    try {
+        const response = await fetch(SHEET_CSV);
+        const text = await response.text();
+        const rows = text.split("\n").slice(2); // Bỏ 2 dòng đầu
+        sheetData = rows.map(row => {
+            const cols = row.split(",");
+            return {
+                name: cols[0]?.trim(),
+                img: cols[1]?.trim(),
+                price: cols[2]?.trim(),
+                link: cols[3]?.trim(),
+                status: cols[4]?.trim()
+            };
+        });
+        render();
+    } catch (e) {
+        console.error("Lỗi lấy dữ liệu Sheet");
+    }
+}
+
+// 4. Hàm thay đổi chế độ xem
+function changeMode(m) {
+    mode = m;
+    render();
+}
+
+// 5. Hàm hiển thị hàng lên web
 function render(){
  const box=document.getElementById("shelves");
  box.innerHTML="";
- for(let i=1;i<=TOTAL;i++){
-  const saved=load(i);
-  const auto=AUTO[(i-1)%AUTO.length];
-  const p=(mode==="manual"&&saved)?saved:auto;
-  box.innerHTML+=`
-  <div class="kệ">
-    <b>Kệ ${i}</b><br>
-    ${p.name||""} – ${p.price||""}<br>
-    ${p.link?`<a href="${p.link}" target="_blank">👉 Mua</a>`:""}
-    <div class="admin-only">
-      <input id="n${i}" placeholder="Tên" value="${saved?.name||""}">
-      <input id="g${i}" placeholder="Giá" value="${saved?.price||""}">
-      <input id="l${i}" placeholder="Link" value="${saved?.link||""}">
-      <button onclick="save(${i},{name:n${i}.value,price:g${i}.value,link:l${i}.value})">💾 Lưu</button>
-    </div>
-  </div>`;
+
+ if (mode === "auto") {
+    // CHẾ ĐỘ TỰ ĐỘNG: Lấy từ Sheet
+    sheetData.forEach((p, index) => {
+        if (p.status === "1" && p.name) {
+            box.innerHTML += `
+            <div class="kệ">
+                <img src="${p.img}" class="img-sp" onerror="this.src='https://via.placeholder.com/150?text=Anh-Cho-Duyet'">
+                <b>${p.name}</b><br>
+                <span style="color:red">${p.price}</span><br>
+                <a class="btn-mua" href="${p.link}" target="_blank">🛒 Mua ngay</a>
+            </div>`;
+        }
+    });
+    if(box.innerHTML==="") box.innerHTML="<p>Tủ đồ tự động đang trống. Hãy bật '1' ở cột E trên Sheet.</p>";
+ } else {
+    // CHẾ ĐỘ DÁN TAY: Lấy từ LocalStorage
+    for(let i=1;i<=TOTAL;i++){
+        const saved=load(i);
+        box.innerHTML+=`
+        <div class="kệ">
+            <b>Kệ ${i}</b><br>
+            ${saved ? `${saved.name} – ${saved.price}<br><a class="btn-mua" href="${saved.link}" target="_blank">👉 Mua</a>` : "<i>Trống</i>"}
+            <div class="admin-only">
+                <input id="n${i}" placeholder="Tên" value="${saved?.name||""}">
+                <input id="g${i}" placeholder="Giá" value="${saved?.price||""}">
+                <input id="l${i}" placeholder="Link ảnh hoặc Link SP" value="${saved?.link||""}">
+                <button onclick="save(${i},{name:n${i}.value,price:g${i}.value,link:l${i}.value})">💾 Lưu</button>
+            </div>
+        </div>`;
+    }
  }
 }
-render();
+
+// Khởi chạy
+fetchSheet();
 </script>
 </body>
 </html>
