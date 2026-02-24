@@ -5,26 +5,28 @@ async function loadProducts() {
     try {
         const response = await fetch(sheetUrl);
         const data = await response.text();
-        const rows = data.split("\n").slice(2); // Bỏ 2 dòng đầu (tiêu đề và hướng dẫn)
+        // Máy tự tách các dòng trong Sheet
+        const rows = data.split("\n").slice(2); 
 
-        box.innerHTML = ""; // Xóa dòng chữ đang tải
+        // Tạo một khu vực riêng để hàng từ Sheet đổ vào
+        let autoHtml = "<h2>📦 Hàng mới cập nhật (Tự động)</h2><div style='display: flex; flex-wrap: wrap;'>";
 
         rows.forEach(row => {
             const cols = row.split(",");
             if (cols.length >= 5) {
-                const name = cols[0].trim();  // Cột A: Tên món
-                const img = cols[1].trim();   // Cột B: Ảnh
-                const price = cols[2].trim(); // Cột C: Giá
-                const link = cols[3].trim();  // Cột D: Link Shopee
-                const status = cols[4].trim(); // Cột E: Bật (1 = hiện, 0 = ẩn)
+                const name = cols[0] ? cols[0].trim() : "";  
+                const img = cols[1] ? cols[1].trim() : "";   
+                const price = cols[2] ? cols[2].trim() : ""; 
+                const link = cols[3] ? cols[3].trim() : "";  
+                const status = cols[4] ? cols[4].trim() : ""; 
 
-                // Chỉ hiện sản phẩm nếu cột E ghi là 1
-                if (status === "1") {
-                    box.innerHTML += `
-                        <div class="item">
-                            <img src="${img}" alt="${name}" onerror="this.src='https://via.placeholder.com/150'">
+                // Chỉ hiện nếu cột E bạn đánh số 1
+                if (status === "1" && name !== "") {
+                    autoHtml += `
+                        <div class="item" style="border: 2px solid #ff9900; margin: 10px; padding: 10px; width: 200px;">
+                            <img src="${img}" alt="${name}" style="width:100%" onerror="this.src='https://via.placeholder.com/150'">
                             <h3>${name}</h3>
-                            <p>${price}</p>
+                            <p><b>${price}</b></p>
                             <a class="btn" href="${link}" target="_blank">Mua ngay</a>
                         </div>
                     `;
@@ -32,12 +34,13 @@ async function loadProducts() {
             }
         });
 
-        if (box.innerHTML === "") {
-            box.innerHTML = "<p>Hiện tại tủ đồ đang trống (Hãy bật '1' ở cột E trên Sheet)</p>";
-        }
+        autoHtml += "</div><hr><h2>✍️ Khu vực dán tay của bạn</h2>";
+        
+        // Chèn toàn bộ hàng từ Sheet lên TRÊN cùng của danh sách hiện có
+        box.insertAdjacentHTML('afterbegin', autoHtml);
 
     } catch (error) {
-        box.innerHTML = "<p>❌ Lỗi kết nối dữ liệu: " + error + "</p>";
+        console.log("Đang đợi dữ liệu từ Sheet...");
     }
 }
 
