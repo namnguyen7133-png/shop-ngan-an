@@ -1,82 +1,221 @@
-async function renderProducts(shopName) {
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>HỆ THỐNG SHOP</title>
 
-document.getElementById("main-title").innerText = "GỢI Ý MẶT HÀNG HOT";
+<style>
 
-document.getElementById("sub-title").innerHTML =
-`<a href="index.html" class="back-btn">⬅ Quay lại danh sách shop</a>`;
+body{
+font-family:Arial;
+background:#f5f5f5;
+margin:0;
+}
 
-try{
+header{
+background:#fb5531;
+color:white;
+text-align:center;
+padding:15px;
+font-size:22px;
+}
 
-const url =
-`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(shopName)}`;
+.container{
+max-width:1100px;
+margin:auto;
+padding:20px;
+}
 
-const res = await fetch(url);
-const data = await res.text();
+.shop-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+gap:15px;
+}
 
-const rows = data.split("\n");
+.shop{
+background:white;
+padding:15px;
+border-radius:10px;
+text-align:center;
+cursor:pointer;
+border:1px solid #ddd;
+}
 
-let html = '<div class="product-grid">';
-let hasItem = false;
+.shop:hover{
+border-color:#fb5531;
+}
 
-for (let i = 1; i < rows.length; i++) {
+.products{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+gap:20px;
+}
 
-let row = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+.card{
+background:white;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
 
-if (row.length < 5) continue;
+.card img{
+width:100%;
+height:180px;
+object-fit:cover;
+}
 
-let name = row[0].replace(/"/g,"").trim();
-let img = row[1].replace(/"/g,"").trim();
-let price = row[2].replace(/"/g,"").trim();
-let link = row[3].replace(/"/g,"").trim();
-let stock = row[4].replace(/"/g,"").trim();
+.info{
+padding:10px;
+text-align:center;
+}
+
+.price{
+color:#ee4d2d;
+font-weight:bold;
+}
+
+.buy{
+display:block;
+background:#fb5531;
+color:white;
+padding:8px;
+margin-top:8px;
+text-decoration:none;
+border-radius:5px;
+}
+
+.back{
+display:inline-block;
+margin-bottom:15px;
+color:#fb5531;
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<header id="title">HỆ THỐNG 32 SHOP</header>
+
+<div class="container">
+
+<div id="content"></div>
+
+</div>
+
+<script>
+
+const SHEET_ID="1_Xwvp767BMtRnqA-9lF3ROOSbBIBk1k_QwvE2CT-h5s"
+
+const SHOPS=[
+{name:"Ngân An",gid:"0"},
+{name:"Minh Châu",gid:"2042428163"},
+{name:"Bích Ngọc",gid:"2009289883"},
+{name:"Gia Bách",gid:"793885535"},
+{name:"Ngô Gialinh",gid:"2040744619"},
+{name:"Minh Phương",gid:"1363743009"},
+{name:"Anh Dũng",gid:"87027625"},
+{name:"Hải Vinh",gid:"1113281647"}
+]
+
+const params=new URLSearchParams(location.search)
+const shop=params.get("shop")
+
+if(!shop){
+showShops()
+}else{
+showProducts(shop)
+}
+
+function showShops(){
+
+let html='<div class="shop-grid">'
+
+SHOPS.forEach(s=>{
+
+html+=`
+<div class="shop" onclick="openShop('${s.name}')">
+${s.name}
+</div>
+`
+
+})
+
+html+='</div>'
+
+document.getElementById("content").innerHTML=html
+
+}
+
+function openShop(name){
+
+location="?shop="+encodeURIComponent(name)
+
+}
+
+async function showProducts(name){
+
+document.getElementById("title").innerHTML=name
+
+const shop=SHOPS.find(s=>s.name==name)
+
+const url=
+`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${shop.gid}`
+
+const res=await fetch(url)
+
+const data=await res.text()
+
+const rows=data.split("\n")
+
+let html='<div class="back" onclick="location.href=\'./\'">⬅ Quay lại</div>'
+
+html+='<div class="products">'
+
+for(let i=2;i<rows.length;i++){
+
+let row=rows[i].split(",")
+
+let name=row[0]
+let img=row[1]
+let price=row[2]
+let link=row[3]
+let stock=row[4]
 
 if(name && stock=="1"){
 
-html += `
+html+=`
 <div class="card">
 
-<img src="${img}" 
-onerror="this.src='https://via.placeholder.com/170?text=Anh-San-Pham'">
+<img src="${img}">
 
-<div class="p-info">
+<div class="info">
 
-<div class="p-name">${name}</div>
+<div>${name}</div>
 
-<div class="p-price">${price} đ</div>
+<div class="price">${price} đ</div>
 
-<a href="${link}" class="btn-buy" target="_blank">
+<a class="buy" target="_blank" href="${link}">
 MUA NGAY
 </a>
 
 </div>
+
 </div>
-`;
-
-hasItem = true;
+`
 
 }
 
 }
 
-html += '</div>';
+html+='</div>'
 
-if(!hasItem){
-
-html =
-`<div style="text-align:center;padding:40px">
-<h3>Chưa có sản phẩm bật</h3>
-<p>Hãy nhập số <b>1</b> ở cột <b>E</b></p>
-</div>`;
+document.getElementById("content").innerHTML=html
 
 }
 
-document.getElementById("content").innerHTML = html;
+</script>
 
-}catch(e){
-
-document.getElementById("content").innerHTML =
-"<p style='text-align:center'>❌ Không tải được dữ liệu</p>";
-
-}
-
-}
+</body>
+</html>
