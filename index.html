@@ -14,10 +14,10 @@
         .shop-icon { background: #fb5531; color: white; width: 50px; height: 50px; line-height: 50px; border-radius: 50%; font-size: 18px; font-weight: bold; }
         .shop-label { font-size: 12px; margin-top: 8px; color: #888; }
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #eee; }
-        .card img { width: 100%; height: 170px; object-fit: cover; }
-        .p-info { padding: 10px; text-align: center; }
-        .p-name { font-size: 14px; font-weight: 600; height: 40px; overflow: hidden; margin-bottom: 5px; color: #222; }
+        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #eee; display: flex; flex-direction: column; }
+        .card img { width: 100%; height: 170px; object-fit: cover; background: #eee; }
+        .p-info { padding: 10px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .p-name { font-size: 14px; font-weight: 600; height: 40px; overflow: hidden; margin-bottom: 5px; color: #222; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         .p-price { color: #ee4d2d; font-weight: bold; font-size: 16px; margin-bottom: 10px; }
         .btn-buy { background: #fb5531; color: white; text-decoration: none; padding: 8px; border-radius: 4px; display: block; font-size: 13px; font-weight: bold; }
         .back-btn { display: inline-block; margin-bottom: 15px; color: #fb5531; text-decoration: none; font-weight: bold; border: 1px solid #fb5531; padding: 5px 15px; border-radius: 20px; }
@@ -27,7 +27,7 @@
 
 <header>
     <h1 id="main-title">HỆ THỐNG SIÊU THỊ 32 SHOP</h1>
-    <p id="sub-title">Chọn một số để xem sản phẩm</p>
+    <p id="sub-title">Chọn một số cửa hàng để xem sản phẩm</p>
 </header>
 
 <div class="container">
@@ -36,13 +36,9 @@
 
 <script>
 const SHEET_ID = "1_Xwvp767BMtrNqA-9IF3ROOSbBlBk1k_QwvE2CT-h5s";
-// Danh sách các tab cần loại bỏ không hiện lên Web (Tab kỹ thuật)
-const excludeSheets = ["BẢNG_VÀNG", "data", "data_web", "Danh_Sach_Link"];
-
 const urlParams = new URLSearchParams(window.location.search);
 const user = urlParams.get('user');
 
-// Danh sách tên người được lấy trực tiếp từ danh sách bạn vừa gửi
 const allShops = [
     "Ngân An", "Minh Châu", "Bích Ngọc", "Gia Bách", "Ngô Gialinh", "Minh Phương", "Anh Dũng", "Hải Vinh", 
     "Bạch Anh", "Kim Huệ", "Tuấn Anh", "Thế Anh", "Thị Mai", "Việt Hưng", "Thị Hồng", "Văn Hiệp", 
@@ -75,26 +71,32 @@ async function renderProducts(shopName) {
     document.getElementById("sub-title").innerHTML = `<a href="index.html" class="back-btn">⬅ Quay lại danh sách shop</a>`;
     
     try {
-        // Lấy dữ liệu CSV từ Sheet của người được chọn
+        // Lấy dữ liệu dạng CSV từ Google Sheets
         const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(shopName)}`);
         const data = await res.text();
         
-        // Tách dòng, bỏ 2 dòng tiêu đề đầu tiên
-        const rows = data.split("\n").slice(2); 
+        // Chia dữ liệu thành từng dòng
+        const rows = data.split("\n"); 
         
         let html = '<div class="product-grid">';
         let hasItem = false;
 
-        rows.forEach(row => {
-            // Tách cột theo chuẩn CSV (dấu phẩy)
-            const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            let name = cols[0]?.replace(/"/g, "");
-            let img = cols[1]?.replace(/"/g, "");
-            let price = cols[2]?.replace(/"/g, "");
-            let link = cols[3]?.replace(/"/g, "");
-            let stock = cols[4]?.replace(/"/g, ""); // Cột E: Phải là số 1 mới hiện
+        // Quét từ dòng thứ 3 (bỏ qua 2 dòng tiêu đề)
+        for (let i = 2; i < rows.length; i++) {
+            if (!rows[i].trim()) continue;
 
-            if (name && stock && stock.trim() == "1") {
+            // Xử lý tách cột CSV an toàn hơn
+            const cols = rows[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+            if (!cols || cols.length < 5) continue;
+
+            let name = cols[0].replace(/"/g, "");
+            let img = cols[1].replace(/"/g, "");
+            let price = cols[2].replace(/"/g, "");
+            let link = cols[3].replace(/"/g, "");
+            let stock = cols[4].replace(/"/g, "").trim(); 
+
+            // Kiểm tra: Nếu cột E có số 1 thì mới hiện
+            if (name && (stock === "1" || stock === 1)) {
                 html += `
                 <div class="card">
                     <img src="${img}" onerror="this.src='https://via.placeholder.com/170?text=Sản+Phẩm'">
@@ -106,14 +108,19 @@ async function renderProducts(shopName) {
                 </div>`;
                 hasItem = true;
             }
-        });
+        }
 
         html += '</div>';
-        if (!hasItem) html = "<div style='text-align:center; padding:50px;'><h3>Shop hiện đang cập nhật hàng.</h3><p>Quay lại sau bạn nhé!</p></div>";
+        if (!hasItem) {
+            html = `<div style='text-align:center; padding:50px;'>
+                        <h3>Cửa hàng của ${shopName} hiện chưa bật hàng.</h3>
+                        <p>Hãy kiểm tra lại cột E (số 1) trong Sheet!</p>
+                    </div>`;
+        }
         document.getElementById("content").innerHTML = html;
 
     } catch (e) {
-        document.getElementById("content").innerHTML = "❌ Lỗi kết nối dữ liệu Sheet.";
+        document.getElementById("content").innerHTML = "❌ Lỗi: Không thể kết nối dữ liệu. Vui lòng kiểm tra lại quyền chia sẻ Sheet.";
     }
 }
 </script>
