@@ -11,10 +11,10 @@
         .container { max-width: 1100px; margin: auto; padding: 15px; }
         
         /* Lưới Shop */
-        .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
-        .shop-card { background: white; padding: 15px 5px; border-radius: 12px; text-align: center; cursor: pointer; border: 1px solid #eee; transition: 0.2s; }
-        .shop-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .shop-number { background: var(--main-color); color: white; width: 30px; height: 30px; line-height: 30px; border-radius: 50%; margin: 0 auto 8px; font-weight: bold; }
+        .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 15px; }
+        .shop-card { background: white; padding: 20px 10px; border-radius: 12px; text-align: center; cursor: pointer; border: 1px solid #eee; transition: 0.2s; }
+        .shop-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: var(--main-color); }
+        .shop-number { background: var(--main-color); color: white; width: 40px; height: 40px; line-height: 40px; border-radius: 50%; margin: 0 auto; font-weight: bold; font-size: 18px; }
         
         /* Lưới sản phẩm */
         .products { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
@@ -24,8 +24,9 @@
         .info { padding: 10px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; }
         .p-name { font-size: 13px; font-weight: 500; height: 36px; overflow: hidden; margin-bottom: 5px; }
         .price { color: #ee4d2d; font-weight: bold; font-size: 15px; margin-bottom: 10px; }
-        .buy { display: block; color: white; padding: 10px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 10px; }
-        .back { display: inline-block; margin-bottom: 15px; padding: 8px 15px; background: #fff; color: var(--main-color); border: 1px solid var(--main-color); border-radius: 20px; cursor: pointer; }
+        .buy { display: block; color: white; padding: 10px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 11px; text-transform: uppercase; }
+        .back { display: inline-block; margin-bottom: 15px; padding: 8px 15px; background: #fff; color: var(--main-color); border: 1px solid var(--main-color); border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .shop-title { margin-bottom: 15px; font-weight: bold; color: #555; }
     </style>
 </head>
 <body>
@@ -34,10 +35,9 @@
 <div class="container" id="content"></div>
 
 <script>
-// ID file gốc của bạn
 const SHEET_ID = "1_Xwvp767BMtRnqA-9lF3ROOSbBIBk1k_QwvE2CT-h5s";
 
-// Danh sách tự động hóa 33 Shop từ các tab sheet của bạn
+// Danh sách giữ nguyên để khớp với GID của Sheet
 const SHOPS = [
     {n: "Ngân An", g: "0"}, {n: "Minh Châu", g: "2042428163"}, {n: "Bích Ngọc", g: "2009289883"},
     {n: "Gia Bách", g: "793885535"}, {n: "Ngô Gialinh", g: "2040744619"}, {n: "Minh Phương", g: "1363743009"},
@@ -50,7 +50,7 @@ const SHOPS = [
     {n: "Thị Phương", g: "1795348787"}, {n: "Hoài Nam", g: "1468986790"}, {n: "Khắc Năng", g: "801738430"},
     {n: "Thị Hà", g: "673532367"}, {n: "Minh Nam", g: "1798395208"}, {n: "Kim Anh", g: "2038870297"},
     {n: "Minh Hằng", g: "1796982267"}, {n: "Quý Cường", g: "1593249867"}, 
-    {n: "DỊCH VỤ VỆ SINH", g: "518971287"} // Shop 33 lấy từ data_web
+    {n: "DỊCH VỤ VỆ SINH", g: "518971287"}
 ];
 
 function getBtn(url) {
@@ -61,22 +61,32 @@ function getBtn(url) {
     return { t: "XEM CHI TIẾT", c: "#fb5531" };
 }
 
-async function render(shopName) {
+async function render(shopIndex) {
     const main = document.getElementById("content");
-    main.innerHTML = '<div style="text-align:center;padding:50px">Đang mở cửa hàng...</div>';
-    const shop = SHOPS.find(s => s.n === shopName);
+    main.innerHTML = '<div style="text-align:center;padding:50px">Đang tải dữ liệu...</div>';
+    
+    const idx = parseInt(shopIndex) - 1;
+    const shop = SHOPS[idx];
+    
+    if(!shop) {
+        location.href = '?';
+        return;
+    }
+
     try {
         const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${shop.g}`);
         const csv = await res.text();
         const rows = csv.split("\n").slice(1);
-        let html = `<div class="back" onclick="location.href='?'">⬅ Quay lại danh sách</div><div class="products">`;
+        
+        let html = `
+            <div class="back" onclick="location.href='?'">⬅ Quay lại</div>
+            <div class="shop-title">Cửa hàng số: ${shopIndex}</div>
+            <div class="products">`;
         
         rows.forEach(r => {
             const col = r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            // Cột A có tên và Cột E có số 1 thì mới hiện
             if (col[0] && col[4]?.trim() == "1") {
                 const btn = getBtn(col[3]?.trim());
-                // Xử lý ảnh/video youtube
                 let img = col[1]?.replace(/"/g, "").trim();
                 if (img.includes('youtu')) img = `https://img.youtube.com/vi/${img.split('/').pop()}/0.jpg`;
                 
@@ -84,7 +94,7 @@ async function render(shopName) {
                 <div class="card">
                     <div class="media-box"><img src="${img}"></div>
                     <div class="info">
-                        <div class="p-name">${col[0]}</div>
+                        <div class="p-name">${col[0].replace(/"/g, "")}</div>
                         <div class="price">${col[2]}</div>
                         <a class="buy" target="_blank" href="${col[3]}" style="background:${btn.c}">${btn.t}</a>
                     </div>
@@ -92,18 +102,22 @@ async function render(shopName) {
             }
         });
         main.innerHTML = html + '</div>';
-    } catch (e) { main.innerHTML = "Lỗi kết nối dữ liệu Sheet!"; }
+    } catch (e) { main.innerHTML = "Lỗi kết nối dữ liệu!"; }
 }
 
 const urlParams = new URLSearchParams(window.location.search);
-const p = urlParams.get('shop');
+const shopId = urlParams.get('id');
 
-if (p) { 
-    render(p); 
+if (shopId) { 
+    render(shopId); 
 } else {
     let grid = '<div class="shop-grid">';
     SHOPS.forEach((s, i) => {
-        grid += `<div class="shop-card" onclick="location.href='?shop=${encodeURIComponent(s.n)}'"><div class="shop-number">${i+1}</div><div style="font-size:11px;font-weight:600">${s.n}</div></div>`;
+        // Chỉ hiện số, không hiện tên s.n
+        grid += `
+        <div class="shop-card" onclick="location.href='?id=${i+1}'">
+            <div class="shop-number">${i+1}</div>
+        </div>`;
     });
     document.getElementById("content").innerHTML = grid + '</div>';
 }
